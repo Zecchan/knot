@@ -1,0 +1,112 @@
+<div class="chat">
+    <div class="chatcontent" id="chatcontent">
+        <div class="chatbubble">
+            <div class="message">Lorem Ipsum</div>
+            <div class="info">Jan 13, 2019 - 15:00:00</div>
+        </div> 
+        <div class="chatbubble self">
+            <div class="message">Lorem Ipsum</div>
+            <div class="info">Jan 13, 2019 - 15:00:00</div>
+        </div> 
+    </div>
+    <div class="chatinput">
+        <span style="display: inline-block; width: 30px;"></span>
+        <label>
+            Username
+            <input id="uname" style="width: 140px" type="text" placeholder="Enter your name...">
+        </label>
+        <span style="display: inline-block; width: 30px;"></span>
+        <input id="chat" style="width: 800px" type="text" placeholder="Enter your message...">
+        <span style="display: inline-block; width: 30px;"></span>
+        UID: <span id="uid"></span>
+        <span style="display: inline-block; width: 30px;"></span>
+        Status: <span id="status"></span>
+    </div>
+</div>
+
+<script>
+    var ClientUID = "" + Math.round(Math.random() * 100000000);
+    var socket = null;
+    while (ClientUID.length < 8)
+    {
+        ClientUID = "0" + ClientUID;
+    }
+    $(function() {
+        $("#uid").html(ClientUID);
+        ConnectToServer();
+
+        $("#chat").on("keypress", function(e){
+            if (e.originalEvent.code == "Enter" || e.originalEvent.code == "NumpadEnter") {
+                var ret = sendChat();
+                if (ret !== true)
+                {
+                    alert("Please enter your " + ret + "!");
+                }
+            }
+        });
+
+        
+        $("#chatcontent").html("");
+    });
+
+    function ConnectToServer() {
+        $("#status").html("Connecting...").addClass("cl-orange");
+        socket = new WebSocket('ws://localhost:8080/chat/ws');
+
+        socket.onerror = function(event) {
+            onError(event)
+        };
+
+        socket.onopen = function(event) {
+            onOpen(event)
+        };
+
+        socket.onmessage = function(event) {
+            onMessage(event)
+        };
+    }
+
+    function onMessage(event) {
+        console.log(event.data);
+        var jso = JSON.parse(event.data);
+        if (jso) addToContent(jso);
+    }
+
+    function onOpen(event) {
+        $("#status").html("Connected").addClass("cl-green");
+    }
+
+    function onError(event) {
+        console.log(event.data);
+        $("#status").html("Error").addClass("cl-red");
+    }
+
+    function addToContent(chatData) {
+        if (!chatData) return;
+        var cls = "chatbubble" + ((chatData.UID == ClientUID) ? " self" : "");
+
+        var content = '<div class="' + cls + '"><div class="message">' + chatData.Data + '</div><div class="info">' + chatData.Username  + '#' + chatData.UID +
+            ' &bull; ' + chatData.Timestamp + '</div></div>';
+        $("#chatcontent").append(content);
+    }
+
+    function sendChat() {
+        var o = {
+            Username: $("#uname").val(),
+            Data: $("#chat").val(),
+            UID: ClientUID,
+            Timestamp: moment().format("YYYY-MM-DD HH:mm")
+        }
+        if (!o.Username) return "username";
+        if (!o.Data) return "message";
+        socket.send(JSON.stringify(o));
+        $("#chat").val("");
+        addToContent(o);
+         
+        return true;
+    }
+
+    $(window).on("beforeunload", function() { 
+        socket.close();
+    })
+</script>

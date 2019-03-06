@@ -61,6 +61,7 @@ type Server struct {
 	UseSSL          bool
 	CertificatePath string
 	PrivateKeyPath  string
+	webSocket       *WebSocket
 
 	preRequest  FnContent
 	postRequest FnContent
@@ -204,6 +205,7 @@ func (s *Server) RouteWithConfig(path string, fnc FnContent, cfg *ResponseConfig
 			kr.Request = r
 			kr.Writer = w
 			kr.Config = rcfg
+			kr.WebSocket = s.webSocket
 			if app != nil && int(rcfg.OutputType) == 0 {
 				rcfg.OutputType = app.DefaultOutputType
 			}
@@ -292,6 +294,7 @@ func (s *Server) Listen() {
 func (s *Server) start() error {
 	addr := s.GetAddress()
 	s.status = make(chan string)
+	s.webSocket = &WebSocket{}
 	s.Log().Info("Start listening on server " + addr)
 
 	go func() {

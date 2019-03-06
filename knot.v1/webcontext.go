@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eaciit/toolkit"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/eaciit/toolkit"
 )
 
 var (
@@ -17,10 +18,11 @@ var (
 )
 
 type WebContext struct {
-	Config  *ResponseConfig
-	Server  *Server
-	Request *http.Request
-	Writer  http.ResponseWriter
+	Config    *ResponseConfig
+	Server    *Server
+	Request   *http.Request
+	Writer    http.ResponseWriter
+	WebSocket *WebSocket
 
 	queryKeys   []string
 	cookieStore *CookieStore
